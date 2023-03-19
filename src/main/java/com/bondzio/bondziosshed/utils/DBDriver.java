@@ -11,6 +11,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Optional;
 
 public class DBDriver {
@@ -113,6 +114,8 @@ public class DBDriver {
                 room = new Room(roomId, password, (String) document.get("roomKey"));
                 hashedPassword = (String) document.get("password");
             }
+            System.out.println("Password: " + hashedPassword);
+            if (hashedPassword.length() == 0) return new RoomLoginResult(RoomLoginStatus.RoomNotExists, Optional.empty());
         } catch (Exception e) {
             return new RoomLoginResult(RoomLoginStatus.RoomNotExists, Optional.empty());
         }

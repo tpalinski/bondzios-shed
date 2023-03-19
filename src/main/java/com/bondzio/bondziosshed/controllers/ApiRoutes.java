@@ -48,4 +48,22 @@ public class ApiRoutes {
         DBDriver.RoomDeletionResult res = driver.DeleteRoom(roomId);
         return new ResponseEntity<>(res, res.wasSuccessful() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<RoomResponse> loginRoom(@RequestParam(name = "id") String roomId,
+                                                   @RequestParam(name = "password") String roomPassword) {
+        DBDriver.RoomLoginResult res = driver.LoginRoom(roomId, roomPassword);
+        switch (res.status()){
+            case Success -> {
+                return new ResponseEntity<>(new RoomResponse("Logged in successfully", res.result()), HttpStatus.OK);
+            }
+            case BadPassword -> {
+                return new ResponseEntity<>(new RoomResponse("Error: wrong password", res.result()), HttpStatus.UNAUTHORIZED);
+            }
+            case RoomNotExists -> {
+                return new ResponseEntity<>(new RoomResponse("Error: room does not exist", res.result()), HttpStatus.BAD_REQUEST);
+            }
+        }
+        return null;
+    }
 }
