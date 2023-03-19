@@ -52,4 +52,9 @@ public class Room {
         return encoder.encode(this.roomPassword);
     }
 
+    public boolean comparePassword(String hashedPassword){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        return encoder.matches(this.roomPassword, hashedPassword);
+    }
+
 }

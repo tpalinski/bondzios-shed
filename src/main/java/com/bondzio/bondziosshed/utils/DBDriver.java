@@ -4,10 +4,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.bson.Document;
@@ -41,9 +38,26 @@ public class DBDriver {
             return isSuccessful;
         }
     }
+    public enum RoomLoginStatus{
+        RoomNotExists(false),
+        BadPassword(false),
+        Success(true);
+
+        private boolean isSuccessful;
+
+        private RoomLoginStatus(boolean status){
+            isSuccessful = status;
+        }
+
+        public boolean isSuccessful() {
+            return isSuccessful;
+        }
+    }
 
     public record RoomCreationResult(RoomCreationStatus status, Optional<Room> result) {}
     public record RoomDeletionResult(String message, boolean wasSuccessful){}
+    public record RoomLoginResult(RoomLoginStatus status, Optional<Room> result){}
+
 
     public DBDriver(){
         env = Dotenv.configure().load();
@@ -86,6 +100,26 @@ public class DBDriver {
             return new RoomDeletionResult("Deleted successfully", true);
         } catch (Exception e) {
             return new RoomDeletionResult(e.toString(), false);
+        }
+    }
+
+    public RoomLoginResult LoginRoom(String roomId, String password){
+        Bson filter = Filters.eq("roomId", roomId);
+        Room room = new Room();
+        String hashedPassword = "";
+        try {
+            FindIterable<Document> dbRooms = this.rooms.find(filter);
+            for (Document document: dbRooms) { // should only run once, if not, logical integrity of db is gone
+                room = new Room(roomId, password, (String) document.get("roomKey"));
+                hashedPassword = (String) document.get("password");
+            }
+        } catch (Exception e) {
+            return new RoomLoginResult(RoomLoginStatus.RoomNotExists, Optional.empty());
+        }
+        if(room.comparePassword(hashedPassword)){
+            return new RoomLoginResult(RoomLoginStatus.Success, Optional.of(room));
+        } else { // authorization failed
+            return new RoomLoginResult(RoomLoginStatus.BadPassword, Optional.empty());
         }
     }
 
