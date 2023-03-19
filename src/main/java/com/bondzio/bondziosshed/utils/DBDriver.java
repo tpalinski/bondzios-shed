@@ -14,6 +14,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class DBDriver {
     private Dotenv env;
@@ -42,5 +43,19 @@ public class DBDriver {
     public boolean GetRoom(String roomId){
         Bson filter = Filters.eq("roomId", roomId);
         return this.rooms.countDocuments(filter) > 0;
+    }
+
+    public Optional<Room> CreateRoom(String roomId, String password){
+        Room createdRoom = new Room(roomId, password);
+        Document doc = new Document("roomId", roomId)
+                .append("password", createdRoom.hashPassword())
+                .append("roomKey", createdRoom.getRoomKey());
+        try {
+            this.rooms.insertOne(doc);
+            return Optional.of(createdRoom);
+        } catch (Exception e) {
+            System.out.println(e);
+            return Optional.empty();
+        }
     }
 }
