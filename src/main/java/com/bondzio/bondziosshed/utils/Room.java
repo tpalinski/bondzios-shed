@@ -29,6 +29,12 @@ public class Room {
         this.roomKey = roomKey;
     }
 
+    public Room(){
+        this.roomKey = "";
+        this.roomPassword = "";
+        this.roomID = "";
+    }
+
     public String getRoomID() {
         return roomID;
     }
@@ -39,6 +45,16 @@ public class Room {
 
     public String getRoomKey() {
         return roomKey;
+    }
+
+    public String hashPassword(){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        return encoder.encode(this.roomPassword);
+    }
+
+    public boolean comparePassword(String hashedPassword){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        return encoder.matches(this.roomPassword, hashedPassword);
     }
 
 }
