@@ -17,7 +17,8 @@ public class ApiRoutes {
     }
 
     @GetMapping("/room")
-    public Room getRoom(@RequestParam(name = "id") String roomId){
-        return new Room(roomId, "Password");
+    public String getRoom(@RequestParam(name = "id") String roomId){
+        boolean roomExists = driver.GetRoom(roomId);
+        return roomExists ? "true" : "false";
     }
 }
