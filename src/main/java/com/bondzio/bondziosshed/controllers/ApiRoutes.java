@@ -13,6 +13,7 @@ import java.util.Optional;
 public class ApiRoutes {
 
     static DBDriver driver = new DBDriver();
+    private record RoomResponse(String description, Optional<Room> room){};
     @GetMapping("/")
     public String homepage(){
         return "Refer to the documentation for all routes";
@@ -25,13 +26,20 @@ public class ApiRoutes {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Room> createRoom(@RequestParam(name = "id") String roomId,
+    public ResponseEntity<RoomResponse> createRoom(@RequestParam(name = "id") String roomId,
                                            @RequestParam(name = "password") String roomPassword){
-        Optional<Room> room = driver.CreateRoom(roomId, roomPassword);
-        if(room.isPresent()){
-            return new ResponseEntity<Room>(room.get(), HttpStatus.CREATED);
-        } else { // insertion unsuccessful
-            return new ResponseEntity<Room>(new Room(), HttpStatus.CONFLICT);
+        DBDriver.RoomCreationResult res = driver.CreateRoom(roomId, roomPassword);
+        switch(res.status()){
+            case RoomExistsError -> {
+                return new ResponseEntity<RoomResponse>(new RoomResponse("Error: Room already exists", res.result()), HttpStatus.CONFLICT);
+            }
+            case CreatedSucessfully -> {
+                return new ResponseEntity<RoomResponse>(new RoomResponse("Created Sucessfully", res.result()), HttpStatus.CREATED);
+            }
+            case InternalRoomCreationError -> {
+                return new ResponseEntity<>(new RoomResponse("Error: Internal database error", res.result()), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
+        return null;
     }
 }

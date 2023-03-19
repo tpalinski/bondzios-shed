@@ -26,6 +26,24 @@ public class DBDriver {
     private MongoCollection rooms;
 
 
+    public enum RoomCreationStatus{
+        RoomExistsError(false),
+        InternalRoomCreationError(false),
+        CreatedSucessfully(true);
+
+        private boolean isSuccessful;
+
+        private RoomCreationStatus(boolean statusType){
+            isSuccessful = statusType;
+        }
+
+        public boolean isSuccessful() {
+            return isSuccessful;
+        }
+    }
+
+    public record RoomCreationResult(RoomCreationStatus status, Optional<Room> result) {}
+
     public DBDriver(){
         env = Dotenv.configure().load();
         this.connectionString = new ConnectionString("mongodb+srv://admin:" + env.get("DB_PASSWORD") + "@cluster0.ipgs6c8.mongodb.net/?retryWrites=true&w=majority");
@@ -45,17 +63,20 @@ public class DBDriver {
         return this.rooms.countDocuments(filter) > 0;
     }
 
-    public Optional<Room> CreateRoom(String roomId, String password){
+    public RoomCreationResult CreateRoom(String roomId, String password){
         Room createdRoom = new Room(roomId, password);
         Document doc = new Document("roomId", roomId)
                 .append("password", createdRoom.hashPassword())
                 .append("roomKey", createdRoom.getRoomKey());
+        if(GetRoom(roomId)) return new RoomCreationResult(RoomCreationStatus.RoomExistsError, Optional.empty());
         try {
             this.rooms.insertOne(doc);
-            return Optional.of(createdRoom);
+            return new RoomCreationResult(RoomCreationStatus.CreatedSucessfully, Optional.of(createdRoom));
         } catch (Exception e) {
             System.out.println(e);
-            return Optional.empty();
+            return new RoomCreationResult(RoomCreationStatus.InternalRoomCreationError, Optional.empty());
         }
     }
+
+
 }
