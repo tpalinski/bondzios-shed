@@ -42,4 +42,10 @@ public class ApiRoutes {
         }
         return null;
     }
+
+    @PostMapping("/delete")
+    public ResponseEntity<DBDriver.RoomDeletionResult> deleteRoom(@RequestParam(name = "id") String roomId){
+        DBDriver.RoomDeletionResult res = driver.DeleteRoom(roomId);
+        return new ResponseEntity<>(res, res.wasSuccessful() ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

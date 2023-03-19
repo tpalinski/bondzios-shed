@@ -43,6 +43,7 @@ public class DBDriver {
     }
 
     public record RoomCreationResult(RoomCreationStatus status, Optional<Room> result) {}
+    public record RoomDeletionResult(String message, boolean wasSuccessful){}
 
     public DBDriver(){
         env = Dotenv.configure().load();
@@ -75,6 +76,16 @@ public class DBDriver {
         } catch (Exception e) {
             System.out.println(e);
             return new RoomCreationResult(RoomCreationStatus.InternalRoomCreationError, Optional.empty());
+        }
+    }
+
+    public RoomDeletionResult DeleteRoom(String roomId){
+        Bson filter = Filters.eq("roomId", roomId);
+        try {
+            this.rooms.findOneAndDelete(filter);
+            return new RoomDeletionResult("Deleted successfully", true);
+        } catch (Exception e) {
+            return new RoomDeletionResult(e.toString(), false);
         }
     }
 
